@@ -1,20 +1,26 @@
-import socketio
-import time
-sio = socketio.Client(logger=True, engineio_logger=True)
+from sqlalchemy import create_engine, Column, String, Integer
+from sqlalchemy.orm import sessionmaker, declarative_base
+from dataclasses import dataclass
 
-@sio.on('response')
-def on_response(sid, data):
+db = create_engine("sqlite:///sqlite.db")
+Session = sessionmaker(bind=db)
+session = Session()
 
-    print('Response received:', data)
+Base = declarative_base()
 
-@sio.on('testing')
-def on_testing(data):
-    print('Testing received:', data)
-    sio.emit('resp test', {'status': 'ok'})
+@dataclass
+class VM(Base):
+    __tablename__ = "vms"
 
-try:
-    sio.connect('http://localhost:5000', auth={'ip': "127.0.0.1", 'token': 'ubuntu'})
-except socketio.exceptions.ConnectionError as e:
-    print(f"Connection failed: {e}")
+    id = Column(Integer, primary_key=True)
+    name:str = Column(String(50), unique=True)
 
-sio.wait()
+
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+
+
+Base.metadata.create_all(bind=db)
+
+import package.ws
