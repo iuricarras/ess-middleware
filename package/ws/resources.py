@@ -68,3 +68,27 @@ def post_fault_tolerance(data):
                 break
 
     return {"status": "Fault tolerance completed"}, 200
+
+@sio.on('/rest/remotemigration/post')
+def get_remote_migration(data):
+    global proxmox
+    global f
+    body = data
+    vmID = body['vmID']
+    node = body['node']
+    target_endpoint = body['target_endpoint']
+    target_storage = body['target_storage']
+    target_bridge = body['target_bridge']
+
+    data = dict()
+    data['target-endpoint'] = target_endpoint
+    data['target-storage'] = target_storage
+    data['target-bridge'] = target_bridge
+
+    try:
+        proxmox.nodes(node).qemu(vmID).remote_migrate.post(
+            **data
+        )
+        return {"status": "Remote migration completed"}, 200
+    except Exception as e:
+        return {"error": str(e)}, 500
