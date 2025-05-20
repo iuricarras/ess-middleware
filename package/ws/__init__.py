@@ -19,11 +19,15 @@ presources = Resources()
 
 threading.Thread(target=APIThread, args=(proxmox, presources)).start()
 
+
+
 try:
-    sio.connect('http://localhost:5000', auth={'ip': "127.0.0.1", 'token': 'ubuntu'})
+    sio.connect('http://localhost:5000', auth={'ip': "192.168.22.14", 'token': 'DitkYWBEv8cnAyCs'})
 except socketio.exceptions.ConnectionError as e:
     print(f"Connection failed: {e}")
 
 from . import resources
+
+resources.startFaultTolerance()
 
 sio.wait()

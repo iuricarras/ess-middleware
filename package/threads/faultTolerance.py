@@ -44,7 +44,7 @@ def FaultTolerance(vmID, proxmox, resources, killThread):
                 vmstate=1,
             )
             print(f"[{vmID}] - Snapshot created.")
-            time.sleep(60)
+            time.sleep(30)
         except Exception as e:
             print(f"[{vmID}] - Error managing snapshot: {e}")
             time.sleep(10)

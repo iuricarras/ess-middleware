@@ -5,8 +5,28 @@ import threading
 from package.threads.faultTolerance import FaultTolerance
 from . import proxmox, presources
 import json
+import time
 
 threads = []
+
+def startFaultTolerance():
+    global threads
+    time.sleep(5)
+    VMs = session.query(VM).all()
+    for vm in VMs:
+        vmID = vm.name
+        thread_resources = ThreadResources()
+        thread_resources.vmID = vmID
+        thread_resources.killThread = threading.Event()
+
+        thread = threading.Thread(target=FaultTolerance, args=(vmID, proxmox, presources, thread_resources.killThread))
+        thread.start()
+
+        thread_resources.thread = thread
+
+        threads.append(thread_resources)
+        print(f"Thread started for VM {vmID}")
+
 
 @sio.on('/rest/faulttolerance/get')
 def get_fault_tolerance(data):
@@ -25,8 +45,9 @@ def get_fault_tolerance(data):
 def post_fault_tolerance(data):
     global threads
 
-    vmListPost = data
-    vmListDB = VM.query.all()
+    vmListPost = data['data']
+    print(f"Received VM list: {vmListPost}")
+    vmListDB = session.query(VM).all()
 
 
     for vm in vmListPost:
@@ -92,3 +113,106 @@ def get_remote_migration(data):
         return {"status": "Remote migration completed"}, 200
     except Exception as e:
         return {"error": str(e)}, 500
+
+@sio.on('/rest/ha/groups/get')
+def get_ha_groups(data):
+    """
+    Get HA group information.
+    """
+    try:
+        ha_groups = proxmox.cluster.ha.groups.get()
+        sio.emit('/rest/ha/groups/get', json.dumps(ha_groups))
+    except Exception as e:
+        print(f"Error fetching HA group information: {e}")
+        sio.emit('/rest/ha/groups/get', json.dumps({"error": str(e)}))
+
+@sio.on('/rest/ha/groups/post')
+def post_ha_groups(data):
+    """
+    Post HA group information.
+    """
+    try:
+        ha_group = data['data']
+        proxmox.cluster.ha.groups.post(**ha_group)
+        sio.emit('/rest/ha/groups/post', json.dumps({"status": "HA group created"}))
+    except Exception as e:
+        print(f"Error creating HA group: {e}")
+        sio.emit('/rest/ha/groups/post', json.dumps({"error": str(e)}))
+
+
+@sio.on('/rest/ha/groups/delete')
+def delete_ha_groups(data):
+    """
+    Delete HA group information.
+    """
+    try:
+        ha_group = data['data']
+        proxmox.cluster.ha.groups(ha_group["group"]).delete()
+        sio.emit('/rest/ha/groups/delete', json.dumps({"status": "HA group deleted"}))
+    except Exception as e:
+        print(f"Error deleting HA group: {e}")
+        sio.emit('/rest/ha/groups/delete', json.dumps({"error": str(e)}))
+
+@sio.on('/rest/ha/resources/get')
+def get_ha_resources(data):
+    """
+    Get HA resource information.
+    """
+    try:
+        ha_resources = proxmox.cluster.ha.resources.get()
+        sio.emit('/rest/ha/resources/get', json.dumps(ha_resources))
+    except Exception as e:
+        print(f"Error fetching HA resource information: {e}")
+        sio.emit('/rest/ha/resources/get', json.dumps({"error": str(e)}))
+
+@sio.on('/rest/ha/resources/post')
+def post_ha_resources(data):
+    """
+    Post HA resource information.
+    """
+    try:
+        ha_resource = data['data']
+        proxmox.cluster.ha.resources.post(**ha_resource)
+        sio.emit('/rest/ha/resources/post', json.dumps({"status": "HA resource created"}))
+    except Exception as e:
+        print(f"Error creating HA resource: {e}")
+        sio.emit('/rest/ha/resources/post', json.dumps({"error": str(e)}))
+
+@sio.on('/rest/ha/resources/delete')
+def delete_ha_resources(data):
+    """
+    Delete HA resource information.
+    """
+    try:
+        ha_resource = data['data']
+        proxmox.cluster.ha.resources(ha_resource["sid"]).delete()
+        sio.emit('/rest/ha/resources/delete', json.dumps({"status": "HA resource deleted"}))
+    except Exception as e:
+        print(f"Error deleting HA resource: {e}")
+        sio.emit('/rest/ha/resources/delete', json.dumps({"error": str(e)}))
+
+
+@sio.on('/rest/cluster/resources/get')
+def get_cluster_resources(data):
+    """
+    Get cluster resources information
+    """
+    try:
+        cluster_resources = proxmox.cluster.resources.get()
+        sio.emit('/rest/cluster/resources/get', json.dumps(cluster_resources))
+    except Exception as e:
+        print(f"Error fetching cluster resources information: {e}")
+        sio.emit('/rest/cluster/resources/get', json.dumps({"error": str(e)}))
+
+@sio.on('/rest/qemu/migration/post')
+def post_qemu_migration(data):
+    """
+    Creates a new migration task.
+    """
+    try:
+        migration = data['data']
+        proxmox.nodes(migration['node']).qemu(migration['vmid']).migrate.post(**migration)
+        sio.emit('/rest/qemu/migration/post', json.dumps({"status": "Migration Done"}))
+    except Exception as e: 
+        print(f"Error creating HA resource: {e}")
+        sio.emit('/rest/qemu/migration/post', json.dumps({"error": str(e)}))
