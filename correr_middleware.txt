@@ -1,0 +1,1 @@
+dentro do .venv -> python -m package

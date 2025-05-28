@@ -22,7 +22,7 @@ threading.Thread(target=APIThread, args=(proxmox, presources)).start()
 
 
 try:
-    sio.connect('http://localhost:5000', auth={'ip': "192.168.22.14", 'token': 'DitkYWBEv8cnAyCs'})
+    sio.connect('http://localhost:5000', auth={'ip': "192.168.60.10", 'token': 'hw6va0LFchM9JpBn'})
 except socketio.exceptions.ConnectionError as e:
     print(f"Connection failed: {e}")
 
