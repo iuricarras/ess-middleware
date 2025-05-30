@@ -26,6 +26,8 @@ try:
 except socketio.exceptions.ConnectionError as e:
     print(f"Connection failed: {e}")
 
+print("Conexão à plataforma estabelecida.")
+
 from . import resources
 
 resources.startFaultTolerance()
