@@ -1,5 +1,7 @@
 # Hypervisor Cluster HA & LM Manager - Daemon
 
+**⚠️ Warning:** This code is an academic project and is not intended for production use.
+
 This daemon is a Python service that manages high-availability (HA) and live migration (LM) for Proxmox clusters. It acts as a bridge between the web platform ([frontend](https://github.com/rodrigo-gom3s/ess-frontend) and [backend](https://github.com/iuricarras/ess-backend)) and the Proxmox cluster, enabling fault tolerance management, live migration, and HA group/resource control.
 
 ## Main Functionalities
